@@ -8,6 +8,7 @@ class TgBot:
     yatoken: str
     admin_ids: str
     support_id: int
+    link_bot: str
 
 
 @dataclass
@@ -21,4 +22,5 @@ def load_config(path: str = None) -> Config:
     return Config(tg_bot=TgBot(token=env('BOT_TOKEN'),
                                yatoken=env('TOKEN'),
                                admin_ids=env('ADMIN_IDS'),
-                               support_id=env('SUPPORT_ID')))
+                               support_id=env('SUPPORT_ID'),
+                               link_bot=env('LINK_BOT')))

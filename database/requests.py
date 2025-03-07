@@ -37,6 +37,17 @@ async def get_user_tg_id(tg_id: int) -> User:
     async with async_session() as session:
         return await session.scalar(select(User).where(User.tg_id == tg_id))
 
+async def get_users_role(role: str) -> list[User]:
+    """
+    Получение списка пользователей с заданной ролью
+    :param role:
+    :return:
+    """
+    logging.info('get_users_role')
+    async with async_session() as session:
+        users = await session.scalars(select(User).where(User.role == role))
+        list_users = [user for user in users]
+        return list_users
 
 async def update_username(tg_id: int, username: str) -> None:
     logging.info('update_username')
@@ -113,6 +124,22 @@ async def get_order_tg_id(tg_id: int) -> User:
     logging.info('get_user_tg_id')
     async with async_session() as session:
         return await session.scalar(select(Order).where(Order.tg_id == tg_id))
+
+
+async def get_order_by_tg_id(tg_id: int) -> list[Order]:
+    """
+    Получение списка пользователей с заданной ролью
+    :param tg_id:
+    :return:
+    """
+    logging.info('get_order_by_tg_id')
+    async with async_session() as session:
+        orders = await session.scalars(select(Order).where(Order.tg_id == tg_id))
+        if orders:
+            list_users = [order for order in orders]
+            return list_users
+        else:
+            return "0"
 
 
 """ Frame """

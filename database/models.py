@@ -15,16 +15,14 @@ class Base(AsyncAttrs, DeclarativeBase):
 
 class User(Base):
     __tablename__ = 'users'
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    tg_id: Mapped[int] = mapped_column(Integer)
+    tg_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     username: Mapped[str] = mapped_column(String, nullable=True)
     role: Mapped[str] = mapped_column(String, default='user')
 
 
 class Order(Base):
     __tablename__ = 'orders'
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    tg_id: Mapped[int] = mapped_column(Integer)
+    tg_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     frame_id: Mapped[int] = mapped_column(String)
     date_payment: Mapped[str] = mapped_column(String)
     link_folder: Mapped[str] = mapped_column(String)

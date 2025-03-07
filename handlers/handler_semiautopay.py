@@ -9,7 +9,7 @@ from keyboards.keyboard_semiautopay import keyboard_check_payment, keyboard_send
 from config_data.config import Config, load_config
 from database import requests as rq
 from database.models import Frame
-from services.yandex_drive import get_download_link
+from services.yandex_drive import get_download_link, get_photo_view_link
 
 from datetime import datetime
 import logging
@@ -123,7 +123,7 @@ async def process_confirm_cancel_payment(callback: CallbackQuery, state: FSMCont
         await bot.send_message(chat_id=user_tg_id,
                                text='Ваш платеж отклонен!')
     elif payment == 'confirm':
-        link_original = await get_download_link(file_path=path.replace('preview', 'original'))
+        link_original = await get_photo_view_link(file_path=path.replace('preview', 'original'))
         await callback.message.answer(text=f'<a href="tg://user?id={user_tg_id}">Пользователю</a>'
                                            f' открыт доступ к оригинальным фотографиям события'
                                            f' {event}: команда {team} ')
