@@ -224,10 +224,7 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
     data = await state.get_data()
     path_list = data['path'].split('/')
     path_event = '/'.join(path_list[:-1])
-    if await check_role(tg_id=callback.from_user.id,
-                        role=rq.UserRole.partner) or await check_role(tg_id=callback.from_user.id,
-                                                                      role=rq.UserRole.admin):
-        path_event = path_event + '/original'
+    print(path_event)
     list_folder = await get_list_folders_to_path(path_event)
     if list_folder:
         list_folder_int = list(map(int, list_folder))
