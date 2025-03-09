@@ -196,7 +196,8 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
                             role=rq.UserRole.partner) or await check_role(tg_id=callback.from_user.id,
                                                                           role=rq.UserRole.admin):
             await callback.message.edit_text(text=f'Посмотреть подборку оригиналов фотографий можно здесь\n\n'
-                                                  f'{link_preview}')
+                                                  f'{link_preview}',
+                                             reply_markup=keyboard_not_public_link())
         else:
             await callback.message.edit_text(text=f'Посмотреть подборку можно здесь\n\n'
                                                   f'{link_preview},'
