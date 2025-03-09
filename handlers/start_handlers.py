@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 from database import requests as rq
 from database.requests import add_user
 from utils.error_handling import error_handler
-from services.yandex_drive import get_list_folders_to_path, get_download_link, get_photo_view_link
+from services.yandex_drive import get_list_folders_to_path, get_list_file_to_path, get_photo_view_link
 from filter.admin_filter import check_super_admin
 from utils.utils_keyboard import utils_handler_pagination_and_select_item
 from utils.send_admins import send_text_admins
@@ -137,29 +137,40 @@ async def get_team(message: Message, state: FSMContext, bot: Bot):
     list_folder_int = list(map(int, list_folder))
     if num_team.isdigit() and int(num_team) in list_folder_int:
         path = path + '/' + str(int(num_team))
+        list_file = await get_list_file_to_path(path=path)
         await state.update_data(path=path)
         event = path.split('/')[-3]
-        frame = await rq.get_frame_event(event=event)
-        cost = int(config.tg_bot.cost_default)
-        id_frame = 0
-        if frame:
-            cost = frame.cost
-            id_frame = frame.id
-        link_preview = await get_photo_view_link(file_path=path)
-        if link_preview:
-            if check_role(tg_id=message.from_user.id,
-                          role=rq.UserRole.partner) or check_role(tg_id=message.from_user.id,
-                                                                  role=rq.UserRole.admin):
-                await message.answer(text=f'Посмотреть подборку оригиналов фотографий можно здесь\n\n'
-                                          f'{link_preview}')
+        if list_file:
+            frame = await rq.get_frame_event(event=event)
+            cost = int(config.tg_bot.cost_default)
+            id_frame = 0
+            if frame:
+                cost = frame.cost
+                id_frame = frame.id
+            link_preview = await get_photo_view_link(file_path=path)
+            if link_preview:
+                if check_role(tg_id=message.from_user.id,
+                              role=rq.UserRole.partner) or check_role(tg_id=message.from_user.id,
+                                                                      role=rq.UserRole.admin):
+                    await message.answer(text=f'Посмотреть подборку оригиналов фотографий можно здесь\n\n'
+                                              f'{link_preview}')
+                else:
+                    await message.answer(text=f'Посмотреть подборку можно здесь\n\n'
+                                              f'{link_preview},'
+                                              f' стоимость вашего пакета {cost} ₽',
+                                         reply_markup=keyboard_preview_folder(id_frame=id_frame))
             else:
-                await message.answer(text=f'Посмотреть подборку можно здесь\n\n'
-                                          f'{link_preview},'
-                                          f' стоимость вашего пакета {cost} ₽',
-                                     reply_markup=keyboard_preview_folder(id_frame=id_frame))
+                await message.answer(text='Возникла проблема с генерацией ссылки на подборку фотографий',
+                                     reply_markup=keyboard_not_public_link())
+                await send_text_admins(bot=bot,
+                                       text=f'При генерации ссылки на подборку фотографий <b>{event}'
+                                            f' экипаж {num_team}</b>'
+                                            f'у пользователя <a href="tg://userid?id={message.from_user.id}">'
+                                            f'{message.from_user.username}</a> возникла проблема')
         else:
             await message.answer(text='Фотографии для вашего экипажа ещё не добавлены, как они будут'
-                                      ' загружены мы вас оповестить.')
+                                      ' загружены мы вас оповестим.',
+                                 reply_markup=keyboard_not_public_link())
             await send_text_admins(bot=bot,
                                    text=f'Пользователь <a href="tg://userid?id={message.from_user.id}">'
                                         f'{message.from_user.username}</a> заинтересовался подборкой фотографий '
@@ -183,6 +194,7 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
     num_team = callback.data.split('_')[-1]
     path = path + '/' + num_team
     await state.update_data(path=path)
+    list_file = await get_list_file_to_path(path=path)
     event = path.split('/')[-3]
     frame = await rq.get_frame_event(event=event)
     cost = config.tg_bot.cost_default
@@ -190,19 +202,27 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
     if frame:
         cost = frame.cost
         id_frame = frame.id
-    link_preview = await get_photo_view_link(file_path=path)
-    if link_preview:
-        if await check_role(tg_id=callback.from_user.id,
-                            role=rq.UserRole.partner) or await check_role(tg_id=callback.from_user.id,
-                                                                          role=rq.UserRole.admin):
-            await callback.message.edit_text(text=f'Посмотреть подборку оригиналов фотографий можно здесь\n\n'
-                                                  f'{link_preview}',
-                                             reply_markup=keyboard_not_public_link())
+    if list_file:
+        link_preview = await get_photo_view_link(file_path=path)
+        if link_preview:
+            if await check_role(tg_id=callback.from_user.id,
+                                role=rq.UserRole.partner) or await check_role(tg_id=callback.from_user.id,
+                                                                            role=rq.UserRole.admin):
+                await callback.message.edit_text(text=f'Посмотреть подборку оригиналов фотографий можно здесь\n\n'
+                                                      f'{link_preview}',
+                                                 reply_markup=keyboard_not_public_link())
+            else:
+                await callback.message.edit_text(text=f'Посмотреть подборку можно здесь\n\n'
+                                                      f'{link_preview},'
+                                                      f' стоимость вашего пакета {cost} ₽',
+                                                 reply_markup=keyboard_preview_folder(id_frame=id_frame))
         else:
-            await callback.message.edit_text(text=f'Посмотреть подборку можно здесь\n\n'
-                                                  f'{link_preview},'
-                                                  f' стоимость вашего пакета {cost} ₽',
-                                             reply_markup=keyboard_preview_folder(id_frame=id_frame))
+            await callback.message.edit_text(text='Возникла проблема с генерацией ссылки на подборку фотографий',
+                                             reply_markup=keyboard_not_public_link())
+            await send_text_admins(bot=bot,
+                                   text=f'При генерации ссылки на подборку фотографий <b>{event} экипаж {num_team}</b>'
+                                        f'у пользователя <a href="tg://userid?id={callback.from_user.id}">'
+                                        f'{callback.from_user.username}</a> возникла проблема')
     else:
         await callback.message.edit_text(text='Фотографии для вашего экипажа ещё не добавлены, как они будут'
                                               ' загружены мы вас оповестим.',
