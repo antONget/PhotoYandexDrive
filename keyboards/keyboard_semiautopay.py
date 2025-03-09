@@ -9,9 +9,9 @@ def keyboard_send_check(id_frame: int) -> InlineKeyboardMarkup:
     return keyboard
 
 
-def keyboard_check_payment(user_tg_id: int, id_frame: str) -> InlineKeyboardMarkup:
+def keyboard_check_payment(order_id: int) -> InlineKeyboardMarkup:
     logging.info("keyboard_check_payment")
-    button_1 = InlineKeyboardButton(text='Спам',  callback_data=f'payment_cancel_{user_tg_id}_{id_frame}')
-    button_2 = InlineKeyboardButton(text='Подтвердить', callback_data=f'payment_confirm_{user_tg_id}_{id_frame}')
+    button_1 = InlineKeyboardButton(text='Спам',  callback_data=f'payment_cancel_{order_id}')
+    button_2 = InlineKeyboardButton(text='Подтвердить', callback_data=f'payment_confirm_{order_id}')
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_1, button_2]])
     return keyboard

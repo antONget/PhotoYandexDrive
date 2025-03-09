@@ -4,7 +4,7 @@ from config_data.config import Config, load_config
 config: Config = load_config()
 
 
-async def send_message_admins(bot: Bot, text: str):
+async def send_text_admins(bot: Bot, text: str):
     """
     Рассылка сообщения администраторам
     :param bot:

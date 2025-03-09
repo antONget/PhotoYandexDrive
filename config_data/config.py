@@ -9,6 +9,7 @@ class TgBot:
     admin_ids: str
     support_id: int
     link_bot: str
+    cost_default: int
 
 
 @dataclass
@@ -23,4 +24,5 @@ def load_config(path: str = None) -> Config:
                                yatoken=env('TOKEN'),
                                admin_ids=env('ADMIN_IDS'),
                                support_id=env('SUPPORT_ID'),
-                               link_bot=env('LINK_BOT')))
+                               link_bot=env('LINK_BOT'),
+                               cost_default=env('COST_DEFAULT')))

@@ -2,11 +2,9 @@ from aiogram import F, Router, Bot
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.fsm.state import State, StatesGroup, default_state
-from aiogram.filters import StateFilter
+from aiogram.fsm.state import State, StatesGroup
 
-import keyboards.keyboards_edit_list_personal as kb
-from keyboards.start_keyboard import keyboard_start
+import keyboards.admin.keyboards_edit_list_personal as kb
 import database.requests as rq
 from database.models import User
 from filter.admin_filter import IsSuperAdmin
@@ -21,6 +19,7 @@ import logging
 router = Router()
 config: Config = load_config()
 
+
 class Personal(StatesGroup):
     id_tg_personal = State()
 
@@ -28,41 +27,19 @@ class Personal(StatesGroup):
 # Персонал
 @router.message(F.text == 'Персонал', IsSuperAdmin())
 @error_handler
-async def process_change_list_personal(message: Message, bot: Bot) -> None:
+async def select_action_partner(message: Message, state: FSMContext,  bot: Bot) -> None:
     """
     Выбор роли для редактирования списка
     :param message:
-    :param bot:
-    :return:
-    """
-    logging.info(f'process_change_list_personal: {message.chat.id}')
-    try:
-        await message.edit_text(text="Выберите роль которую вы хотите изменить.",
-                                reply_markup=kb.keyboard_select_role())
-    except:
-        await message.answer(text="Выбeрите роль которую вы хотите изменить.",
-                             reply_markup=kb.keyboard_select_role())
-
-
-@router.callback_query(F.data.startswith('edit_list_'))
-@error_handler
-async def process_select_action(callback: CallbackQuery, state: FSMContext, bot: Bot) -> None:
-    """
-    Выбор действия которое нужно совершить с ролью при редактировании
-    :param callback:
     :param state:
     :param bot:
     :return:
     """
-    logging.info(f'process_add_admin: {callback.message.chat.id} {callback.data}' )
-    edit_role = callback.data.split('_')[2]
+    logging.info(f'select_action_partner: {message.chat.id}')
     role = '<b>ПАРТНЕРА</b>'
-    if edit_role == rq.UserRole.partner:
-        role = '<b>ВОДИТЕЛЯ</b>'
-    await state.update_data(edit_role=edit_role)
-    await callback.message.edit_text(text=f"Назначить или разжаловать пользователя как {role}?",
-                                     reply_markup=kb.keyboard_select_action())
-    await callback.answer()
+    await state.update_data(edit_role='partner')
+    await message.answer(text=f"Назначить или разжаловать пользователя как {role}?",
+                         reply_markup=kb.keyboard_select_action())
 
 
 @router.callback_query(F.data == 'personal_add')
@@ -137,8 +114,6 @@ async def process_forward_del_admin(callback: CallbackQuery, state: FSMContext, 
     data = await state.get_data()
     edit_role = data["edit_role"]
     role = '<b>ПАРТНЕРОВ</b>'
-    if edit_role == rq.UserRole.executor:
-        role = '<b>ВОДИТЕЛЕЙ</b>'
     list_users: list[User] = await rq.get_users_role(role=edit_role)
     forward = int(callback.data.split('_')[-1]) + 1
     back = forward - 2
@@ -168,8 +143,6 @@ async def process_back_del_admin(callback: CallbackQuery, state: FSMContext, bot
     data = await state.get_data()
     edit_role = data["edit_role"]
     role = '<b>ПАРТНЕРОВ</b>'
-    if edit_role == rq.UserRole.executor:
-        role = '<b>ВОДИТЕЛЕЙ</b>'
     list_users = await rq.get_users_role(role=edit_role)
     back = int(callback.data.split('_')[3]) - 1
     forward = back + 2
@@ -199,10 +172,9 @@ async def process_delete_user(callback: CallbackQuery, state: FSMContext, bot: B
     data = await state.get_data()
     edit_role = data["edit_role"]
     role = '<b>ПАРТНЕРОВ</b>'
-    if edit_role == rq.UserRole.executor:
-        role = '<b>ВОДИТЕЛЕЙ</b>'
+
     telegram_id = int(callback.data.split('_')[-1])
-    user_info = await rq.get_user_by_id(tg_id=telegram_id)
+    user_info = await rq.get_user_tg_id(tg_id=telegram_id)
     await state.update_data(del_personal=telegram_id)
     await callback.message.edit_text(text=f'Удалить пользователя <a href="tg://user?id={user_info.tg_id}">'
                                           f'{user_info.username}</a> из {role}',
@@ -222,7 +194,7 @@ async def process_not_del_personal_list(callback: CallbackQuery, bot: Bot) -> No
     await bot.delete_message(chat_id=callback.message.chat.id,
                              message_id=callback.message.message_id)
     await callback.answer(text=f'Разжалование пользователя отменено', show_alert=True)
-    await process_change_list_personal(message=callback.message, bot=bot)
+    await select_action_partner(message=callback.message, bot=bot)
 
 
 @router.callback_query(F.data == 'del_personal_list')
@@ -233,14 +205,11 @@ async def process_del_personal_list(callback: CallbackQuery, state: FSMContext, 
                              message_id=callback.message.message_id)
     data = await state.get_data()
     tg_id = data['del_personal']
-    edit_role = data["edit_role"]
     role = 'ПАРТНЕРОВ'
-    if edit_role == rq.UserRole.executor:
-        role = 'ВОДИТЕЛЕЙ'
-    await rq.set_user_role(tg_id=tg_id, role=rq.UserRole.user)
+    await rq.update_user_role(tg_id=tg_id, role=rq.UserRole.user)
     await callback.answer(text=f'Пользователь успешно удален из {role}', show_alert=True)
     await bot.send_message(chat_id=tg_id,
                            text=f'Вы удалены из списка {role}',
                            reply_markup=ReplyKeyboardRemove())
     await asyncio.sleep(1)
-    await process_change_list_personal(message=callback.message, bot=bot)
+    await select_action_partner(message=callback.message, bot=bot)

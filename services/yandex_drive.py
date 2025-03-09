@@ -42,6 +42,7 @@ async def get_download_link(file_path):
         error_msg = f"❌ Ошибка: {response.text}"
         print(error_msg)
 
+
 async def get_photo_view_link(file_path: str) -> str:
     """Получает ссылку на просмотр фото в Яндекс.Диске."""
     url = "https://cloud-api.yandex.net/v1/disk/resources"

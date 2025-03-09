@@ -6,25 +6,6 @@ from filter.admin_filter import check_super_admin
 import logging
 
 
-async def keyboard_select_role(tg_id: int) -> InlineKeyboardMarkup:
-    """
-    Клавиатура для выбора роли для редактирования
-    :return:
-    """
-    logging.info('keyboard_select_role')
-    button_1 = InlineKeyboardButton(text='Партнер',
-                                    callback_data=f'edit_list_{UserRole.partner}')
-    button_2 = InlineKeyboardButton(text='Водитель',
-                                    callback_data=f'edit_list_{UserRole.executor}')
-    button_3 = InlineKeyboardButton(text='Администратор',
-                                    callback_data=f'edit_list_{UserRole.admin}')
-    if await check_super_admin(telegram_id=tg_id):
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_1], [button_2], [button_3]])
-    else:
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_1], [button_2]])
-    return keyboard
-
-
 def keyboard_select_action() -> InlineKeyboardMarkup:
     """
     Клавиатура для выбора действия которое нужно совершить с ролью

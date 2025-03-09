@@ -8,8 +8,9 @@ from aiogram.filters import StateFilter
 from keyboards.keyboard_semiautopay import keyboard_check_payment, keyboard_send_check
 from config_data.config import Config, load_config
 from database import requests as rq
-from database.models import Frame
+from database.models import Frame, Order
 from services.yandex_drive import get_download_link, get_photo_view_link
+from utils.send_admins import send_text_admins
 
 from datetime import datetime
 import logging
@@ -45,7 +46,7 @@ async def process_select_item_semi_auto_pay(callback: CallbackQuery, state: FSMC
     team = path.split('/')[-1]
     await callback.message.edit_text(text=f'Для получения оригиналов фотографий {event}/{team}'
                                           f' необходимо оплатить {cost} ₽.\n\n'
-                                          f'💷 Отправьте деньги на TINKOFF по реквизитам:\n'
+                                          f'💷 Отправьте деньги на <code>TINKOFF</code> по реквизитам:\n'
                                           f'👤 Получатель: Владелец карты\n'
                                           f'💳 Номер карты: Ваш номер карты\n'
                                           f'💸 К оплате: {cost} ₽\n\n'
@@ -88,14 +89,23 @@ async def get_check_payment(message: Message, state: FSMContext, bot: Bot) -> No
     path = data['path']
     event = path.split('/')[-3]
     team = path.split('/')[-1]
+    current_date = datetime.now()
+    current_date_str = current_date.strftime('%d-%m-%Y %H:%M')
+    data_order = {'tg_id': message.from_user.id,
+                  'frame_id': int(id_frame),
+                  'date_payment': current_date_str,
+                  'team': team,
+                  'event': event,
+                  'path_folder': path,
+                  'status_order': rq.StatusOrder.process}
+    order_id: int = await rq.add_order(data=data_order)
     for admin in config.tg_bot.admin_ids.split(','):
         try:
             await bot.send_photo(chat_id=admin,
                                  photo=message.photo[-1].file_id,
                                  caption=f'<a href="tg://user?id={message.from_user.id}">Пользователь</a> оплатил'
                                          f' подборку фотографий {event}/{team}. Подтвердите или отклоните оплату',
-                                 reply_markup=keyboard_check_payment(user_tg_id=message.from_user.id,
-                                                                     id_frame=id_frame))
+                                 reply_markup=keyboard_check_payment(order_id=order_id))
         except:
             pass
 
@@ -104,38 +114,40 @@ async def get_check_payment(message: Message, state: FSMContext, bot: Bot) -> No
 async def process_confirm_cancel_payment(callback: CallbackQuery, state: FSMContext, bot: Bot) -> None:
     """
     Подтверждение или отклонение оплаты
-    :param callback: payment_cancel_{user_tg_id}_{id_frame} | payment_confirm_{user_tg_id}_{id_frame}
+    :param callback: payment_cancel_{order_id} | payment_confirm_{order_id}
     :param state:
     :param bot:
     :return:
     """
     logging.info(f'process_confirm_cancel_payment: {callback.message.chat.id}')
-    payment: str = callback.data.split('_')[-3]
-    user_tg_id: str = callback.data.split('_')[-2]
-    id_frame: str = callback.data.split('_')[-1]
-    data = await state.get_data()
-    path = data['path']
+    payment: str = callback.data.split('_')[-2]
+    order_id: int = int(callback.data.split('_')[-1])
+    info_order: Order = await rq.get_order_id(id_=order_id)
+    path = info_order.path_folder
     event = path.split('/')[-3]
     team = path.split('/')[-1]
     await callback.message.edit_reply_markup(reply_markup=None)
     if payment == 'cancel':
         await callback.message.answer(text='Платеж отклонен')
-        await bot.send_message(chat_id=user_tg_id,
+        await bot.send_message(chat_id=info_order.tg_id,
                                text='Ваш платеж отклонен!')
     elif payment == 'confirm':
         link_original = await get_photo_view_link(file_path=path.replace('preview', 'original'))
-        await callback.message.answer(text=f'<a href="tg://user?id={user_tg_id}">Пользователю</a>'
-                                           f' открыт доступ к оригинальным фотографиям события'
-                                           f' {event}: команда {team} ')
-        await bot.send_message(chat_id=user_tg_id,
-                               text=f'Платеж подтвержден. Открыт доступ к оригинальным фотографиям события'
-                                    f' {event}: команда {team}\n\n'
-                                    f'{link_original}')
-        current_date = datetime.now()
-        current_date_str = current_date.strftime('%d-%m-%Y %H:%M')
-        data_order = {'tg_id': user_tg_id,
-                      'frame_id': int(id_frame),
-                      'date_payment': current_date_str,
-                      'link_folder': link_original}
-        await rq.add_order(data=data_order)
+        if link_original:
+            await callback.message.answer(text=f'<a href="tg://user?id={info_order.tg_id}">Пользователю</a>'
+                                               f' открыт доступ к оригинальным фотографиям события'
+                                               f' {event}: команда {team} ')
+            await bot.send_message(chat_id=info_order.tg_id,
+                                   text=f'Платеж подтвержден. Открыт доступ к оригинальным фотографиям события'
+                                        f' {event}: команда {team}\n\n'
+                                        f'{link_original}')
+        else:
+            await callback.message.answer(text='Фотографии для вашего экипажа ещё не добавлены, как они будут'
+                                               ' загружены мы вас оповестим.')
+            await send_text_admins(bot=bot,
+                                   text=f'Пользователь <a href="tg://userid?id={callback.from_user.id}">'
+                                        f'{callback.from_user.username}</a> оплатил подборку фотографий '
+                                        f'<b>{event} экипаж {team}</b> но  ссылку не получил')
+        await rq.update_order_id(id_=order_id)
+
     await callback.answer()

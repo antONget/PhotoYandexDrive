@@ -10,7 +10,8 @@ from aiogram.types import ErrorEvent
 import traceback
 from typing import Any, Dict
 from config_data.config import Config, load_config
-from handlers import other_handlers, start_handlers, error, handler_semiautopay
+from handlers.admin import handler_edit_list_personal
+from handlers import other_handlers, start_handlers, error, handler_semiautopay, command_handler
 from database.models import async_main
 from notify_admins import on_startup_notify
 
@@ -39,8 +40,10 @@ async def main():
     dp = Dispatcher()
     await on_startup_notify(bot=bot)
     dp.include_router(error.router)
+    dp.include_router(handler_edit_list_personal.router)
     dp.include_router(start_handlers.router)
     dp.include_router(handler_semiautopay.router)
+    dp.include_router(command_handler.router)
     dp.include_router(other_handlers.router)
 
     # Пропускаем накопившиеся update и запускаем polling
