@@ -258,5 +258,5 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
     :return:
     """
     await state.clear()
-    await callback.message.edit_text(text='Благодарим за интерес к нашему проекту, будем рады видеть вас снова!')
+    await callback.message.answer(text='Благодарим за интерес к нашему проекту, будем рады видеть вас снова!')
     await callback.answer()
