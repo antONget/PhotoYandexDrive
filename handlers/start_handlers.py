@@ -229,11 +229,11 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
                                                                       role=rq.UserRole.admin):
         path_event = path_event + '/original'
     list_folder = await get_list_folders_to_path(path_event)
-    list_folder_int = list(map(int, list_folder))
-    list_sorted = sorted(list_folder_int)
-    list_file = list(map(str, list_sorted))
-    await state.update_data(path=path_event)
-    if list_file:
+    if list_folder:
+        list_folder_int = list(map(int, list_folder))
+        list_sorted = sorted(list_folder_int)
+        list_file = list(map(str, list_sorted))
+        await state.update_data(path=path_event)
         await utils_handler_pagination_and_select_item(list_items=list_file,
                                                        text_message_pagination='Выберите пожалуйста команду:',
                                                        page=0,
