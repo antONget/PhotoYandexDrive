@@ -235,7 +235,9 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
         list_file = list(map(str, list_sorted))
         await state.update_data(path=path_event)
         await utils_handler_pagination_and_select_item(list_items=list_file,
-                                                       text_message_pagination='Выберите пожалуйста команду:',
+                                                       text_message_pagination="Событие: <b>Ралли Яккима '25</b>\n"
+                                                                               "Выберите номер экипажа или"
+                                                                               " отправьте сообщением!",
                                                        page=0,
                                                        count_item_page=100,
                                                        callback_prefix_select='team_select',
