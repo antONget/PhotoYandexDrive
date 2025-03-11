@@ -1,6 +1,6 @@
 from database.models import async_session
 from database.models import User, Order, Frame, Token
-from sqlalchemy import select
+from sqlalchemy import select, update
 from dataclasses import dataclass
 import logging
 from datetime import datetime
@@ -166,15 +166,13 @@ async def update_order_id(id_: int) -> None:
     :param id_:
     :return:
     """
-    logging.info('get_order_tg_id')
+    logging.info(f'update_order_id {id_}')
     async with async_session() as session:
-        order = await session.scalars(select(Order).where(Order.id == id_))
-        if order:
-            order.status_order = StatusOrder.payment
-            current_date = datetime.now()
-            current_date_str = current_date.strftime('%d-%m-%Y %H:%M')
-            order.date_payment = current_date_str
-            await session.commit()
+        current_date = datetime.now()
+        current_date_str = current_date.strftime('%d-%m-%Y %H:%M')
+        await session.execute(update(Order).where(Order.id == id_).values(status_order=StatusOrder.payment,
+                                                                          date_payment=current_date_str))
+        await session.commit()
 
 
 """ FRAME """

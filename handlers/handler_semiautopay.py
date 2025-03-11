@@ -6,6 +6,7 @@ from aiogram.filters import StateFilter
 
 
 from keyboards.keyboard_semiautopay import keyboard_check_payment, keyboard_send_check
+from keyboards.start_keyboard import keyboard_not_public_link
 from config_data.config import Config, load_config
 from database import requests as rq
 from database.models import Frame, Order
@@ -128,7 +129,8 @@ async def process_confirm_cancel_payment(callback: CallbackQuery, state: FSMCont
     team = path.split('/')[-1]
     await callback.message.edit_reply_markup(reply_markup=None)
     if payment == 'cancel':
-        await callback.message.answer(text='Платеж отклонен')
+        await callback.message.answer(text='Платеж отклонен',
+                                      reply_markup=keyboard_not_public_link())
         await bot.send_message(chat_id=info_order.tg_id,
                                text='Ваш платеж отклонен!')
     elif payment == 'confirm':
@@ -140,10 +142,12 @@ async def process_confirm_cancel_payment(callback: CallbackQuery, state: FSMCont
             await bot.send_message(chat_id=info_order.tg_id,
                                    text=f'Платеж подтвержден. Открыт доступ к оригинальным фотографиям события'
                                         f' {event}: команда {team}\n\n'
-                                        f'{link_original}')
+                                        f'{link_original}',
+                                   reply_markup=keyboard_not_public_link())
         else:
             await callback.message.answer(text='Фотографии для вашего экипажа ещё не добавлены, как они будут'
-                                               ' загружены мы вас оповестим.')
+                                               ' загружены мы вас оповестим.',
+                                          reply_markup=keyboard_not_public_link())
             await send_text_admins(bot=bot,
                                    text=f'Пользователь <a href="tg://userid?id={callback.from_user.id}">'
                                         f'{callback.from_user.username}</a> оплатил подборку фотографий '

@@ -149,9 +149,9 @@ async def get_team(message: Message, state: FSMContext, bot: Bot):
                 id_frame = frame.id
             link_preview = await get_photo_view_link(file_path=path)
             if link_preview:
-                if check_role(tg_id=message.from_user.id,
-                              role=rq.UserRole.partner) or check_role(tg_id=message.from_user.id,
-                                                                      role=rq.UserRole.admin):
+                if await check_role(tg_id=message.from_user.id,
+                                    role=rq.UserRole.partner) or await check_role(tg_id=message.from_user.id,
+                                                                                  role=rq.UserRole.admin):
                     await message.answer(text=f'Посмотреть подборку оригиналов фотографий можно здесь\n\n'
                                               f'{link_preview}')
                 else:
@@ -207,7 +207,7 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
         if link_preview:
             if await check_role(tg_id=callback.from_user.id,
                                 role=rq.UserRole.partner) or await check_role(tg_id=callback.from_user.id,
-                                                                            role=rq.UserRole.admin):
+                                                                              role=rq.UserRole.admin):
                 await callback.message.edit_text(text=f'Посмотреть подборку оригиналов фотографий можно здесь\n\n'
                                                       f'{link_preview}',
                                                  reply_markup=keyboard_not_public_link())
@@ -277,6 +277,13 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
     :param bot:
     :return:
     """
-    await state.clear()
-    await callback.message.answer(text='Благодарим за интерес к нашему проекту, будем рады видеть вас снова!')
+    try:
+        await callback.message.edit_text(text='Благодарим за интерес к нашему проекту, будем рады видеть вас снова!',
+                                         reply_markup=keyboard_not_public_link())
+    except:
+        await callback.message.answer(text='Благодарим за интерес к нашему проекту, будем рады видеть вас снова!',
+                                      reply_markup=keyboard_not_public_link())
+    await send_text_admins(bot=bot,
+                           text=f'Пользователь <a href="tg://userid?id={callback.from_user.id}">'
+                                f'{callback.from_user.username}</a>, отказался от покупки')
     await callback.answer()
