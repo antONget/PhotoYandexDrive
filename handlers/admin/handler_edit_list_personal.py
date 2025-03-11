@@ -57,8 +57,6 @@ async def process_personal_add(callback: CallbackQuery, state: FSMContext, bot: 
     data = await state.get_data()
     edit_role = data['edit_role']
     role = '<b>ПАРТНЕРОВ</b>'
-    if edit_role == rq.UserRole.partner:
-        role = '<b>ВОДИТЕЛЕЙ</b>'
     token_data = {"token": rand_token,
                   "role": edit_role}
     await rq.add_token(data=token_data)
@@ -84,9 +82,6 @@ async def process_del_admin(callback: CallbackQuery, state: FSMContext, bot: Bot
     edit_role = data["edit_role"]
     role = '<b>ПАРТНЕРОВ</b>'
     role_ = 'ПАРТНЕРОВ'
-    if edit_role == rq.UserRole.partner:
-        role = '<b>ВОДИТЕЛЕЙ</b>'
-        role_ = 'ВОДИТЕЛЕЙ'
     list_users: list[User] = await rq.get_users_role(role=edit_role)
     if not list_users:
         await callback.answer(text=f'Нет пользователей для удаления из списка {role_}', show_alert=True)
@@ -172,7 +167,6 @@ async def process_delete_user(callback: CallbackQuery, state: FSMContext, bot: B
     data = await state.get_data()
     edit_role = data["edit_role"]
     role = '<b>ПАРТНЕРОВ</b>'
-
     telegram_id = int(callback.data.split('_')[-1])
     user_info = await rq.get_user_tg_id(tg_id=telegram_id)
     await state.update_data(del_personal=telegram_id)

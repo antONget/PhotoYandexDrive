@@ -26,11 +26,10 @@ async def command_orders(message: Message, bot: Bot) -> None:
     orders: list[Order] = await rq.get_orders_tg_id(tg_id=tg_id)
     if orders:
         for order in orders:
-            download = await get_download_link(order.path_folder)
+            # download = await get_download_link(order.path_folder)
             view = await get_photo_view_link(order.path_folder)
             await message.answer(text=f'<b>Дата покупки:</b> {order.date_payment}\n'
                                       f'<b>Событие:</b> {order.event} - <b>экипаж:</b> {order.team}\n'
-                                      f'{download}\n'
                                       f'📄 Ссылка для просмотра: {view}')
     else:
         await message.answer("Вы еще не совершали заказов")

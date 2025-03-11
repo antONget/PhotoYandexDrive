@@ -103,15 +103,16 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
     list_folder_int = list(map(int, list_folder))
     list_sorted = sorted(list_folder_int)
     list_file = list(map(str, list_sorted))
-    await utils_handler_pagination_and_select_item(list_items=list_file,
-                                                   text_message_pagination='Выберите событие:',
-                                                   page=page,
-                                                   count_item_page=100,
-                                                   callback_prefix_select='team_select',
-                                                   callback_prefix_back='team_back',
-                                                   callback_prefix_next='team_next',
-                                                   callback=callback,
-                                                   message=None)
+    msg = await utils_handler_pagination_and_select_item(list_items=list_file,
+                                                         text_message_pagination='Выберите событие:',
+                                                         page=page,
+                                                         count_item_page=100,
+                                                         callback_prefix_select='team_select',
+                                                         callback_prefix_back='team_back',
+                                                         callback_prefix_next='team_next',
+                                                         callback=callback,
+                                                         message=None)
+    await state.update_data(msg=msg)
 
 
 @router.message(F.text, StateFilter(SelectTeam.team))
@@ -125,13 +126,14 @@ async def get_team(message: Message, state: FSMContext, bot: Bot):
     :return:
     """
     logging.info('get_team')
-    try:
-        await bot.delete_message(chat_id=message.chat.id,
-                                 message_id=message.message_id-1)
-    except:
-        pass
-    num_team = message.text
     data = await state.get_data()
+    for i in range(1):
+        try:
+            await bot.delete_message(chat_id=message.chat.id,
+                                     message_id=message.message_id-i-1)
+        except:
+            pass
+    num_team = message.text
     path = data['path']
     list_folder = await get_list_folders_to_path(path)
     list_folder_int = list(map(int, list_folder))
@@ -177,7 +179,9 @@ async def get_team(message: Message, state: FSMContext, bot: Bot):
                                         f'<b>{event} экипаж {num_team}</b>')
         await state.set_state(state=None)
     else:
-        await message.answer(text='Такой экипаж не найден')
+        await message.answer(text='Такой экипаж не найден',
+                             reply_markup=keyboard_not_public_link())
+        await state.update_data(not_team=True)
 
 
 @router.callback_query(F.data.startswith('team_select_'))
@@ -245,6 +249,9 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
     data = await state.get_data()
     path_list = data['path'].split('/')
     path_event = '/'.join(path_list[:-1])
+    if data.get('not_team', False):
+        path_event = '/'.join(path_list[:])
+        await state.update_data(not_team=False)
     print(path_event)
     list_folder = await get_list_folders_to_path(path_event)
     if list_folder:
@@ -252,17 +259,19 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
         list_sorted = sorted(list_folder_int)
         list_file = list(map(str, list_sorted))
         await state.update_data(path=path_event)
-        await utils_handler_pagination_and_select_item(list_items=list_file,
-                                                       text_message_pagination="Событие: <b>Ралли Яккима '25</b>\n"
-                                                                               "Выберите номер экипажа или"
-                                                                               " отправьте сообщением!",
-                                                       page=0,
-                                                       count_item_page=100,
-                                                       callback_prefix_select='team_select',
-                                                       callback_prefix_back='team_back',
-                                                       callback_prefix_next='team_next',
-                                                       callback=callback,
-                                                       message=None)
+        msg = await utils_handler_pagination_and_select_item(list_items=list_file,
+                                                             text_message_pagination="Событие: <b>Ралли Яккима '25</b>\n"
+                                                                                     "Выберите номер экипажа или"
+                                                                                     " отправьте сообщением!",
+                                                             page=0,
+                                                             count_item_page=100,
+                                                             callback_prefix_select='team_select',
+                                                             callback_prefix_back='team_back',
+                                                             callback_prefix_next='team_next',
+                                                             callback=callback,
+                                                             message=None)
+        await state.update_data(msg=msg)
+        await state.set_state(SelectTeam.team)
     else:
         await callback.message.edit_text(text='Нет команд для выбора')
     await callback.answer()

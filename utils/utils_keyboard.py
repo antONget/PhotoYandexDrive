@@ -49,7 +49,7 @@ async def utils_handler_pagination_and_select_item(list_items: list,
                                                    callback_prefix_back: str,
                                                    callback_prefix_next: str,
                                                    callback: CallbackQuery | None,
-                                                   message: Message | None) -> None:
+                                                   message: Message | None) -> Message:
     logging.info(f'utils_keyboard_pagination_and_select_item')
     part = 0
     pagination = True
@@ -67,8 +67,8 @@ async def utils_handler_pagination_and_select_item(list_items: list,
                                               page=page,
                                               max_page=max_page,
                                               pagination=pagination)
-        await message.answer(text=text_message_pagination,
-                             reply_markup=keyboard)
+        msg = await message.answer(text=text_message_pagination,
+                                   reply_markup=keyboard)
         return
     if callback.data.startswith(callback_prefix_back):
         page -= 1
@@ -87,12 +87,13 @@ async def utils_handler_pagination_and_select_item(list_items: list,
                                           max_page=max_page,
                                           pagination=pagination)
     try:
-        await callback.message.edit_text(text=text_message_pagination,
-                                         reply_markup=keyboard)
+        msg = await callback.message.edit_text(text=text_message_pagination,
+                                               reply_markup=keyboard)
     except:
-        await callback.message.edit_text(text=f'{text_message_pagination}.',
-                                         reply_markup=keyboard)
+        msg = await callback.message.edit_text(text=f'{text_message_pagination}.',
+                                               reply_markup=keyboard)
     await callback.answer()
+    return msg
 
 
 def utils_keyboards_one_card(callback_prefix_back: str,
