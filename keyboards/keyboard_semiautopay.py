@@ -4,7 +4,7 @@ import logging
 
 def keyboard_send_check(id_frame: int) -> InlineKeyboardMarkup:
     logging.info("keyboard_send_check")
-    button_1 = InlineKeyboardButton(text='Я оплатил',  callback_data=f'send_check_{id_frame}')
+    button_1 = InlineKeyboardButton(text='отправить чек об оплате',  callback_data=f'send_check_{id_frame}')
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_1]])
     return keyboard
 

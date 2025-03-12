@@ -35,24 +35,25 @@ async def process_select_item_semi_auto_pay(callback: CallbackQuery, state: FSMC
     :return:
     """
     logging.info(f'process_select_item_semi_auto_pay: {callback.message.chat.id}')
+    await state.set_state(state=None)
     item_semi_auto_pay = int(callback.data.split('_')[-1])
     await state.update_data(frame_id=item_semi_auto_pay)
     frame: Frame = await rq.get_frame_id(id_=item_semi_auto_pay)
-    cost = 3000
+    cost = config.tg_bot.cost_default
     if frame:
         cost = frame.cost
     data = await state.get_data()
     path = data['path']
     event = path.split('/')[-3]
     team = path.split('/')[-1]
-    await callback.message.edit_text(text=f'Для получения оригиналов фотографий {event}/{team}'
-                                          f' необходимо оплатить {cost} ₽.\n\n'
-                                          f'💷 Отправьте деньги на <code>TINKOFF</code> по реквизитам:\n'
-                                          f'👤 Получатель: Владелец карты\n'
-                                          f'💳 Номер карты: Ваш номер карты\n'
-                                          f'💸 К оплате: {cost} ₽\n\n'
-                                          f'📷 После перевода нажмите кнопку "Я оплатил" и'
-                                          f' прикрепите скриншот перевода.\n\n',
+    await callback.message.edit_text(text=f'Для оплаты\n'
+                                          f'<b>Ралли Яккима ‘25, экипаж {team}</b>\n'
+                                          f'необходимо осуществить перевод\n'
+                                          f' 3000 р. по номеру телефона:\n'
+                                          f'+79817438193  или карты:\n'
+                                          f'<code>2200 4002 0168 7437</code>\n'
+                                          f'на имя: Ольга Ч, банк ВТБ\n'
+                                          f'…и отправить нам чек.',
                                      reply_markup=keyboard_send_check(id_frame=item_semi_auto_pay))
     await callback.answer()
 
@@ -67,7 +68,7 @@ async def process_get_check(callback: CallbackQuery, state: FSMContext, bot: Bot
     :return:
     """
     logging.info(f'process_get_check: {callback.message.chat.id}')
-    await callback.message.edit_text(text='Отправьте чек об оплате')
+    await callback.message.edit_text(text='отправьте файл сообщением')
     await state.update_data(id_frame=callback.data.split('_')[-1])
     await state.set_state(StateSemiAutoPay.chek_pay)
     await callback.answer()
@@ -139,10 +140,14 @@ async def process_confirm_cancel_payment(callback: CallbackQuery, state: FSMCont
             await callback.message.answer(text=f'<a href="tg://user?id={info_order.tg_id}">Пользователю</a>'
                                                f' открыт доступ к оригинальным фотографиям события'
                                                f' {event}: команда {team} ')
+            current_date = datetime.now()
+            current_date_str = current_date.strftime('%d.%m.%Y %H:%M')
             await bot.send_message(chat_id=info_order.tg_id,
-                                   text=f'Платеж подтвержден. Открыт доступ к оригинальным фотографиям события'
-                                        f' {event}: команда {team}\n\n'
-                                        f'{link_original}',
+                                   text=f'<b>Ралли Яккима ‘25, экипаж {team}</b>\n'
+                                        f'покупка от: {current_date_str}'
+                                        f'{link_original}')
+            await bot.send_message(chat_id=info_order.tg_id,
+                                   text='Благодарим вас за покупку, можете посмотреть другие подборки',
                                    reply_markup=keyboard_not_public_link())
         else:
             await callback.message.answer(text='Фотографии для вашего экипажа ещё не добавлены, как они будут'
