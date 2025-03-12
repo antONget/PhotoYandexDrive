@@ -19,7 +19,6 @@ async def get_list_folders_to_path(path="disk:/") -> list[str]:
     response = requests.get(url, headers=HEADERS, params=params)
     if response.status_code == 200:
         items = response.json().get("_embedded", {}).get("items", [])
-        print(items)
         for item in items:
             if item['type'] == 'dir':
                 list_folder.append(item['name'])
@@ -41,7 +40,6 @@ async def get_list_file_to_path(path="disk:/") -> list[str]:
     response = requests.get(url, headers=HEADERS, params=params)
     if response.status_code == 200:
         items = response.json().get("_embedded", {}).get("items", [])
-        print(items)
         for item in items:
             if item['type'] == 'file':
                 list_folder.append(item['name'])

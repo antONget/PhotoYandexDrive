@@ -27,8 +27,10 @@ Traceback (most recent call last):
     return await wrapped_inner(event, kwargs)
   File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/venv/lib/python3.10/site-packages/aiogram/dispatcher/event/handler.py", line 43, in call
     return await wrapped()
-  File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/handlers/handler_semiautopay.py", line 145, in process_confirm_cancel_payment
-    await callback.message.edit_text(text='Фотографии для вашего экипажа ещё не добавлены, как они будут'
+  File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/handlers/start_handlers.py", line 262, in process_select_action
+    msg = await utils_handler_pagination_and_select_item(list_items=list_file,
+  File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/utils/utils_keyboard.py", line 95, in utils_handler_pagination_and_select_item
+    await callback.answer()
   File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/venv/lib/python3.10/site-packages/aiogram/methods/base.py", line 84, in emit
     return await bot(self)
   File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/venv/lib/python3.10/site-packages/aiogram/client/bot.py", line 498, in __call__
@@ -39,4 +41,4 @@ Traceback (most recent call last):
     response = self.check_response(
   File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/venv/lib/python3.10/site-packages/aiogram/client/session/base.py", line 120, in check_response
     raise TelegramBadRequest(method=method, message=description)
-aiogram.exceptions.TelegramBadRequest: Telegram server says - Bad Request: there is no text in the message to edit
+aiogram.exceptions.TelegramBadRequest: Telegram server says - Bad Request: query is too old and response timeout expired or query ID is invalid

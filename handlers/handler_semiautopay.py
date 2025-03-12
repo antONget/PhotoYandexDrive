@@ -149,7 +149,7 @@ async def process_confirm_cancel_payment(callback: CallbackQuery, state: FSMCont
                                                ' загружены мы вас оповестим.',
                                           reply_markup=keyboard_not_public_link())
             await send_text_admins(bot=bot,
-                                   text=f'Пользователь <a href="tg://userid?id={callback.from_user.id}">'
+                                   text=f'Пользователь <a href="tg://user?id={callback.from_user.id}">'
                                         f'{callback.from_user.username}</a> оплатил подборку фотографий '
                                         f'<b>{event} экипаж {team}</b> но  ссылку не получил')
         await rq.update_order_id(id_=order_id)
