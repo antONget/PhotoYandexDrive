@@ -87,7 +87,7 @@ async def utils_handler_pagination_and_select_item(list_items: list,
                                           max_page=max_page,
                                           pagination=pagination)
     try:
-        msg = await callback.message.edit_text(text=text_message_pagination,
+        msg = await callback.message.answer(text=text_message_pagination,
                                                reply_markup=keyboard)
     except:
         msg = await callback.message.answer(text=f'{text_message_pagination}.',

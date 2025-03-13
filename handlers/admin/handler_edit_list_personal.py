@@ -203,7 +203,6 @@ async def process_del_personal_list(callback: CallbackQuery, state: FSMContext, 
     await rq.update_user_role(tg_id=tg_id, role=rq.UserRole.user)
     await callback.answer(text=f'Пользователь успешно удален из {role}', show_alert=True)
     await bot.send_message(chat_id=tg_id,
-                           text=f'Вы удалены из списка {role}',
-                           reply_markup=ReplyKeyboardRemove())
+                           text=f'Вы удалены из списка {role}')
     await asyncio.sleep(1)
     await select_action_partner(message=callback.message, bot=bot)

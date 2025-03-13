@@ -130,10 +130,10 @@ async def process_confirm_cancel_payment(callback: CallbackQuery, state: FSMCont
     team = path.split('/')[-1]
     await callback.message.edit_reply_markup(reply_markup=None)
     if payment == 'cancel':
-        await callback.message.answer(text='Платеж отклонен',
-                                      reply_markup=keyboard_not_public_link())
+        await callback.message.answer(text='Платеж отклонен')
         await bot.send_message(chat_id=info_order.tg_id,
-                               text='Ваш платеж отклонен!')
+                               text='Ваш платеж отклонен!',
+                               reply_markup=keyboard_not_public_link())
     elif payment == 'confirm':
         link_original = await get_photo_view_link(file_path=path.replace('preview', 'original'))
         if link_original:
@@ -150,9 +150,10 @@ async def process_confirm_cancel_payment(callback: CallbackQuery, state: FSMCont
                                    text='Благодарим вас за покупку, можете посмотреть другие подборки',
                                    reply_markup=keyboard_not_public_link())
         else:
-            await callback.message.answer(text='Фотографии для вашего экипажа ещё не добавлены, как они будут'
-                                               ' загружены мы вас оповестим.',
-                                          reply_markup=keyboard_not_public_link())
+            await bot.send_message(chat_id=info_order.tg_id,
+                                   text='Фотографии для вашего экипажа ещё не добавлены, как они будут'
+                                        ' загружены мы вас оповестим.',
+                                   reply_markup=keyboard_not_public_link())
             await send_text_admins(bot=bot,
                                    text=f'Пользователь <a href="tg://user?id={callback.from_user.id}">'
                                         f'{callback.from_user.username}</a> оплатил подборку фотографий '
