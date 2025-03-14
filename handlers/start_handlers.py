@@ -1,4 +1,4 @@
-from aiogram import Router, Bot, F
+from aiogram import Router, Bot, F, Dispatcher
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.filters import CommandStart, StateFilter, CommandObject
@@ -13,7 +13,7 @@ from utils.utils_keyboard import utils_handler_pagination_and_select_item
 from utils.send_admins import send_text_admins
 from filter.user_filter import check_role
 from keyboards.start_keyboard import keyboard_preview_folder, keyboard_start, keyboard_not_public_link, \
-    keyboard_preview_cancel
+    keyboard_preview_cancel, keyboard_wish
 import logging
 from config_data.config import Config, load_config
 from handlers.command_handler import command_orders, command_help, command_support
@@ -133,13 +133,17 @@ async def get_team(message: Message, state: FSMContext, bot: Bot):
                                             message_id=data.get('msg', False),
                                             reply_markup=None)
         await state.update_data(msg=False)
-    try:
+    elif data.get('msg_wish', False):
         await bot.edit_message_reply_markup(chat_id=message.from_user.id,
-                                            message_id=message.message_id-1,
-                                            reply_markup=None)
-    except:
-        pass
-    if message.text == '/orders':
+                                            message_id=data['msg_wish'],
+                                            reply_markup=keyboard_wish(id_frame=data['id_frame']))
+    elif data.get('msg_thanks', False):
+        await bot.delete_message(chat_id=message.from_user.id,
+                                 message_id=data['msg_thanks'])
+    else:
+        await bot.delete_message(chat_id=message.from_user.id,
+                                 message_id=message.message_id - 1)
+    if message.text == '/order':
         await command_orders(message=message, bot=bot)
         return
     if message.text == '/help':
@@ -171,6 +175,7 @@ async def get_team(message: Message, state: FSMContext, bot: Bot):
             if frame:
                 cost = frame.cost
                 id_frame = frame.id
+            await state.update_data(id_frame=id_frame)
             link_preview = await get_photo_view_link(file_path=path)
             if link_preview:
                 if await check_role(tg_id=message.from_user.id,
@@ -181,11 +186,14 @@ async def get_team(message: Message, state: FSMContext, bot: Bot):
                                               f'{link_preview}',
                                          reply_markup=keyboard_not_public_link())
                 else:
-                    await message.answer(text=f'<b>Ралли Яккима ‘25, экипаж {num_team}</b>\n'
-                                              f'посмотреть подборку:\n'
-                                              f'{link_preview}')
-                    await message.answer(text=f'Стоимость вашего пакета {cost} ₽',
-                                         reply_markup=keyboard_preview_folder(id_frame=id_frame))
+                    msg = await message.answer(text=f'<b>Ралли Яккима ‘25, экипаж {num_team}</b>\n'
+                                                    f'Стоимость вашего пакета {cost} ₽'
+                                                    f'посмотреть подборку:\n'
+                                                    f'{link_preview}',
+                                               reply_markup=keyboard_preview_folder(id_frame=id_frame))
+                    await state.update_data(msg_wish=msg.message_id)
+                    # await message.answer(text=f'Стоимость вашего пакета {cost} ₽',
+                    #                      reply_markup=keyboard_preview_folder(id_frame=id_frame))
             else:
                 await message.answer(text='Возникла проблема с генерацией ссылки на подборку фотографий',
                                      reply_markup=keyboard_not_public_link())
@@ -218,12 +226,7 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
     :param bot:
     :return:
     """
-    try:
-        await bot.edit_message_reply_markup(chat_id=callback.from_user.id,
-                                            message_id=callback.message.message_id,
-                                            reply_markup=None)
-    except:
-        pass
+    await callback.message.delete()
     data = await state.get_data()
     path = data['path']
     num_team = callback.data.split('_')[-1]
@@ -237,6 +240,7 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
     if frame:
         cost = frame.cost
         id_frame = frame.id
+    await state.update_data(id_frame=id_frame)
     await bot.send_chat_action(chat_id=callback.from_user.id, action='typing')
     await bot.send_message(chat_id=callback.from_user.id, text=num_team)
     if list_file:
@@ -250,11 +254,14 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
                                                    f'{link_preview}',
                                               reply_markup=keyboard_not_public_link())
             else:
-                await callback.message.answer(text=f'<b>Ралли Яккима ‘25, экипаж {num_team}</b>\n'
-                                                   f'посмотреть подборку:\n'
-                                                   f'{link_preview}')
-                await callback.message.answer(text=f'Cтоимость вашего пакета {cost} ₽',
-                                              reply_markup=keyboard_preview_folder(id_frame=id_frame))
+                msg = await callback.message.answer(text=f'<b>Ралли Яккима ‘25, экипаж {num_team}</b>\n'
+                                                         f'Стоимость вашего пакета {cost} ₽'
+                                                         f'посмотреть подборку:\n'
+                                                         f'{link_preview}',
+                                                    reply_markup=keyboard_preview_folder(id_frame=id_frame))
+                await state.update_data(msg_wish=msg.message_id)
+                # await callback.message.answer(text=f'Cтоимость вашего пакета {cost} ₽',
+                #                               reply_markup=keyboard_preview_folder(id_frame=id_frame))
         else:
             await callback.message.answer(text='Возникла проблема с генерацией ссылки на подборку фотографий',
                                           reply_markup=keyboard_not_public_link())
@@ -283,13 +290,21 @@ async def process_select_other_team(callback: CallbackQuery, state: FSMContext, 
     :return:
     """
     logging.info('process_select_other_team')
-    try:
+    data = await state.get_data()
+    if data.get('msg_wish', False):
+        await bot.edit_message_reply_markup(chat_id=callback.from_user.id,
+                                            message_id=data['msg_wish'],
+                                            reply_markup=keyboard_wish(id_frame=data['id_frame']))
+        await state.update_data(msg_wish=False)
+    elif data.get('msg_thanks', False):
+        await bot.delete_message(chat_id=callback.from_user.id,
+                                 message_id=data['msg_thanks'])
+        await state.update_data(msg_thanks=False)
+    else:
         await bot.edit_message_reply_markup(chat_id=callback.from_user.id,
                                             message_id=callback.message.message_id,
                                             reply_markup=None)
-    except:
-        pass
-    data = await state.get_data()
+
     path_list = data['path'].split('/')
     path_event = '/'.join(path_list[:-1])
     if data.get('not_team', False):
@@ -330,25 +345,18 @@ async def process_select_cancel(callback: CallbackQuery, state: FSMContext, bot:
     :return:
     """
     logging.info('process_select_cancel')
-    await state.set_state(state=None)
-    try:
-        await bot.delete_message(chat_id=callback.from_user.id,
-                                 message_id=callback.message.message_id)
-    except:
-        pass
     data = await state.get_data()
-    path_list = data['path'].split('/')
-    path_event = '/'.join(path_list[:-2])
-    frame = await rq.get_frame_event(event=path_event)
-    cost = config.tg_bot.cost_default
-    id_frame = 0
-    if frame:
-        cost = frame.cost
-        id_frame = frame.id
-    await callback.message.answer(text='Благодарим за интерес к нашему проекту, будем рады видеть вас снова!')
-    await callback.message.answer(text=f'Стоимость вашего пакета {cost} ₽',
-                                  reply_markup=keyboard_preview_cancel(id_frame=id_frame))
+    if data.get('msg_wish', False):
+        await bot.edit_message_reply_markup(chat_id=callback.from_user.id,
+                                            message_id=data['msg_wish'],
+                                            reply_markup=keyboard_wish(id_frame=data['id_frame']))
+        await state.update_data(msg_wish=False)
+    msg = await callback.message.answer(text='Благодарим за интерес к нашему проекту, будем рады видеть вас снова!',
+                                        reply_markup=keyboard_not_public_link())
+    await state.update_data(msg_thanks=msg.message_id)
     await send_text_admins(bot=bot,
                            text=f'Пользователь <a href="tg://user?id={callback.from_user.id}">'
                                 f'{callback.from_user.username}</a>, отказался от покупки')
+    await state.update_data(msg_wish=False)
     await callback.answer()
+

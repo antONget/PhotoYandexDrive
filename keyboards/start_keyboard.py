@@ -51,3 +51,14 @@ def keyboard_not_public_link() -> InlineKeyboardMarkup:
     button_1 = InlineKeyboardButton(text='Посмотреть другой экипаж', callback_data='other_team')
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_1]])
     return keyboard
+
+
+def keyboard_wish(id_frame: int) -> InlineKeyboardMarkup:
+    """
+    [['Хочу приобрести эти фото'], ['Посмотреть другой экипаж'], ['Спасибо, не в это раз']]
+    :param id_frame:
+    :return:
+    """
+    button_1 = InlineKeyboardButton(text='Хочу приобрести эти фото', callback_data=f'semiautopay_{id_frame}')
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_1]])
+    return keyboard

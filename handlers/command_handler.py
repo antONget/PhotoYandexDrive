@@ -1,7 +1,7 @@
 import logging
 
 from aiogram import F, Router, Bot
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 
 import database.requests as rq
@@ -35,6 +35,29 @@ async def command_orders(message: Message, bot: Bot) -> None:
         await message.answer("Вы еще не совершали заказов")
 
 
+@router.callback_query(F.data == 'show_orders')
+async def command_orders(callback: CallbackQuery, bot: Bot) -> None:
+    """
+    Вывод заказов
+    :param callback:
+    :param bot:
+    :return:
+    """
+    logging.info('command_orders')
+    tg_id: int = callback.from_user.id
+    orders: list[Order] = await rq.get_orders_tg_id(tg_id=tg_id)
+    if orders:
+        for order in orders:
+            # download = await get_download_link(order.path_folder)
+            view = await get_photo_view_link(order.path_folder)
+            await callback.message.answer(text=f'<b>Дата покупки:</b> {order.date_payment}\n'
+                                               f'<b>Событие:</b> {order.event} - <b>экипаж:</b> {order.team}\n'
+                                               f'📄 Ссылка для просмотра: {view}')
+    else:
+        await callback.answer(text="Вы еще не совершали заказов",
+                              show_alert=True)
+
+
 @router.message(Command('help'))
 async def command_help(message: Message, bot: Bot) -> None:
     """
@@ -58,3 +81,20 @@ async def command_support(message: Message, bot: Bot) -> None:
     logging.info('command_support')
     await message.answer(text='Если у вас возникли вопросы по работе бота, сложности при оплате заказа или есть'
                               ' предложения по улучшению функционала напишите мне @SanAndreasFPV')
+
+
+@router.message(Command('clear'))
+async def command_support(message: Message, bot: Bot) -> None:
+    """
+    Поддержка
+    :param message:
+    :param bot:
+    :return:
+    """
+    logging.info('command_support')
+    for i in range(100):
+        try:
+            await bot.delete_message(chat_id=message.from_user.id,
+                                     message_id=message.message_id - i)
+        except:
+            pass

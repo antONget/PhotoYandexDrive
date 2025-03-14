@@ -160,6 +160,17 @@ async def get_order_id(id_: int) -> Order:
         return await session.scalar(select(Order).where(Order.id == id_))
 
 
+async def get_order_path(path: str) -> Order:
+    """
+    Получение заказа по path
+    :param path:
+    :return:
+    """
+    logging.info('get_order_path')
+    async with async_session() as session:
+        return await session.scalar(select(Order).where(Order.path_folder == path))
+
+
 async def update_order_id(id_: int) -> None:
     """
     Обновление заказа по id

@@ -5,14 +5,13 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters import StateFilter
 
 
-from keyboards.keyboard_semiautopay import keyboard_check_payment, keyboard_send_check
+from keyboards.keyboard_semiautopay import keyboard_check_payment, keyboard_send_check, keyboard_show_orders
 from keyboards.start_keyboard import keyboard_not_public_link
 from config_data.config import Config, load_config
 from database import requests as rq
 from database.models import Frame, Order
-from services.yandex_drive import get_download_link, get_photo_view_link
+from services.yandex_drive import get_photo_view_link
 from utils.send_admins import send_text_admins
-
 from datetime import datetime
 import logging
 
@@ -35,6 +34,13 @@ async def process_select_item_semi_auto_pay(callback: CallbackQuery, state: FSMC
     :return:
     """
     logging.info(f'process_select_item_semi_auto_pay: {callback.message.chat.id}')
+    data = await state.get_data()
+    path = data['path']
+    order: Order = await rq.get_order_path(path=path)
+    if order:
+        await callback.message.edit_text(text='Вы уже оплатили этот заказ',
+                                         reply_markup=keyboard_show_orders())
+        return
     await state.set_state(state=None)
     item_semi_auto_pay = int(callback.data.split('_')[-1])
     await state.update_data(frame_id=item_semi_auto_pay)
@@ -42,8 +48,6 @@ async def process_select_item_semi_auto_pay(callback: CallbackQuery, state: FSMC
     cost = config.tg_bot.cost_default
     if frame:
         cost = frame.cost
-    data = await state.get_data()
-    path = data['path']
     event = path.split('/')[-3]
     team = path.split('/')[-1]
     await callback.message.edit_text(text=f'Для оплаты\n'
@@ -146,9 +150,10 @@ async def process_confirm_cancel_payment(callback: CallbackQuery, state: FSMCont
                                    text=f'<b>Ралли Яккима ‘25, экипаж {team}</b>\n'
                                         f'покупка от: {current_date_str}'
                                         f'{link_original}')
-            await bot.send_message(chat_id=info_order.tg_id,
-                                   text='Благодарим вас за покупку, можете посмотреть другие подборки',
-                                   reply_markup=keyboard_not_public_link())
+            msg = await bot.send_message(chat_id=info_order.tg_id,
+                                         text='Благодарим вас за покупку, можете посмотреть другие подборки',
+                                         reply_markup=keyboard_not_public_link())
+            await state.update_data(msg=msg)
         else:
             await bot.send_message(chat_id=info_order.tg_id,
                                    text='Фотографии для вашего экипажа ещё не добавлены, как они будут'
@@ -159,5 +164,4 @@ async def process_confirm_cancel_payment(callback: CallbackQuery, state: FSMCont
                                         f'{callback.from_user.username}</a> оплатил подборку фотографий '
                                         f'<b>{event} экипаж {team}</b> но  ссылку не получил')
         await rq.update_order_id(id_=order_id)
-
     await callback.answer()

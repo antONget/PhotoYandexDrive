@@ -27,6 +27,16 @@ Traceback (most recent call last):
     return await wrapped_inner(event, kwargs)
   File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/venv/lib/python3.10/site-packages/aiogram/dispatcher/event/handler.py", line 43, in call
     return await wrapped()
-  File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/handlers/start_handlers.py", line 224, in process_select_action
-    path = data['path']
-KeyError: 'path'
+  File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/handlers/start_handlers.py", line 295, in process_select_other_team
+    await bot.edit_message_reply_markup(chat_id=callback.from_user.id,
+  File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/venv/lib/python3.10/site-packages/aiogram/client/bot.py", line 1540, in edit_message_reply_markup
+    return await self(call, request_timeout=request_timeout)
+  File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/venv/lib/python3.10/site-packages/aiogram/client/bot.py", line 498, in __call__
+    return await self.session(self, method, timeout=request_timeout)
+  File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/venv/lib/python3.10/site-packages/aiogram/client/session/base.py", line 254, in __call__
+    return cast(TelegramType, await middleware(bot, method))
+  File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/venv/lib/python3.10/site-packages/aiogram/client/session/aiohttp.py", line 185, in make_request
+    response = self.check_response(
+  File "/Users/antonponomarev/PycharmProjects/FhotoArchiveYandex/venv/lib/python3.10/site-packages/aiogram/client/session/base.py", line 120, in check_response
+    raise TelegramBadRequest(method=method, message=description)
+aiogram.exceptions.TelegramBadRequest: Telegram server says - Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message

@@ -15,3 +15,10 @@ def keyboard_check_payment(order_id: int) -> InlineKeyboardMarkup:
     button_2 = InlineKeyboardButton(text='Подтвердить', callback_data=f'payment_confirm_{order_id}')
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_1, button_2]])
     return keyboard
+
+
+def keyboard_show_orders() -> InlineKeyboardMarkup:
+    logging.info("keyboard_show_orders")
+    button_1 = InlineKeyboardButton(text='показать Мои заказы',  callback_data=f'show_orders')
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_1]])
+    return keyboard
