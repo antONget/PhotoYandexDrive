@@ -69,7 +69,7 @@ async def utils_handler_pagination_and_select_item(list_items: list,
                                               pagination=pagination)
         msg = await message.answer(text=text_message_pagination,
                                    reply_markup=keyboard)
-        return
+        return msg
     if callback.data.startswith(callback_prefix_back):
         page -= 1
         if page < 0:

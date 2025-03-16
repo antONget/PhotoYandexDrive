@@ -26,8 +26,9 @@ async def command_orders(message: Message, bot: Bot) -> None:
     orders: list[Order] = await rq.get_orders_tg_id(tg_id=tg_id)
     if orders:
         for order in orders:
-            # download = await get_download_link(order.path_folder)
-            view = await get_photo_view_link(order.path_folder)
+            original_path = order.path_folder.replace('preview', 'original')
+            print(original_path)
+            view = await get_photo_view_link(file_path=original_path)
             await message.answer(text=f'<b>Дата покупки:</b> {order.date_payment}\n'
                                       f'<b>Событие:</b> {order.event} - <b>экипаж:</b> {order.team}\n'
                                       f'📄 Ссылка для просмотра: {view}')
@@ -36,7 +37,7 @@ async def command_orders(message: Message, bot: Bot) -> None:
 
 
 @router.callback_query(F.data == 'show_orders')
-async def command_orders(callback: CallbackQuery, bot: Bot) -> None:
+async def command_orders_callback(callback: CallbackQuery, bot: Bot) -> None:
     """
     Вывод заказов
     :param callback:
@@ -46,16 +47,20 @@ async def command_orders(callback: CallbackQuery, bot: Bot) -> None:
     logging.info('command_orders')
     tg_id: int = callback.from_user.id
     orders: list[Order] = await rq.get_orders_tg_id(tg_id=tg_id)
+    await callback.message.edit_reply_markup(reply_markup=None)
     if orders:
         for order in orders:
             # download = await get_download_link(order.path_folder)
-            view = await get_photo_view_link(order.path_folder)
+            original_path = order.path_folder.replace('preview', 'original')
+            print(original_path)
+            view = await get_photo_view_link(file_path=original_path)
             await callback.message.answer(text=f'<b>Дата покупки:</b> {order.date_payment}\n'
                                                f'<b>Событие:</b> {order.event} - <b>экипаж:</b> {order.team}\n'
                                                f'📄 Ссылка для просмотра: {view}')
     else:
         await callback.answer(text="Вы еще не совершали заказов",
                               show_alert=True)
+    await callback.answer()
 
 
 @router.message(Command('help'))
@@ -84,7 +89,7 @@ async def command_support(message: Message, bot: Bot) -> None:
 
 
 @router.message(Command('clear'))
-async def command_support(message: Message, bot: Bot) -> None:
+async def command_clear(message: Message, bot: Bot) -> None:
     """
     Поддержка
     :param message:

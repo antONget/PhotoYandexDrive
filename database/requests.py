@@ -160,15 +160,19 @@ async def get_order_id(id_: int) -> Order:
         return await session.scalar(select(Order).where(Order.id == id_))
 
 
-async def get_order_path(path: str) -> Order:
+async def get_order_path(path: str, tg_id: int, team: int) -> Order:
     """
     Получение заказа по path
     :param path:
+    :param tg_id:
+    :param team:
     :return:
     """
     logging.info('get_order_path')
     async with async_session() as session:
-        return await session.scalar(select(Order).where(Order.path_folder == path))
+        return await session.scalar(select(Order).filter(Order.path_folder == path,
+                                                         Order.tg_id == tg_id,
+                                                         Order.team == team))
 
 
 async def update_order_id(id_: int) -> None:

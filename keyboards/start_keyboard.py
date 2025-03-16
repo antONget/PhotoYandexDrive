@@ -18,26 +18,30 @@ def keyboard_start() -> ReplyKeyboardMarkup:
     return keyboard
 
 
-def keyboard_preview_folder(id_frame: int) -> InlineKeyboardMarkup:
+def keyboard_preview_folder(id_frame: int, num_team: str) -> InlineKeyboardMarkup:
     """
     [['Хочу приобрести эти фото'], ['Посмотреть другой экипаж'], ['Спасибо, не в это раз']]
     :param id_frame:
+    :param num_team:
     :return:
     """
-    button_1 = InlineKeyboardButton(text='Хочу приобрести эти фото', callback_data=f'semiautopay_{id_frame}')
+    button_1 = InlineKeyboardButton(text='Хочу приобрести эти фото',
+                                    callback_data=f'semiautopay!@!{id_frame}!@!{num_team}')
     button_2 = InlineKeyboardButton(text='Посмотреть другой экипаж', callback_data='other_team')
     button_3 = InlineKeyboardButton(text='Спасибо, не в этот раз', callback_data='cancel')
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_1], [button_2], [button_3]])
     return keyboard
 
 
-def keyboard_preview_cancel(id_frame: int) -> InlineKeyboardMarkup:
+def keyboard_preview_cancel(id_frame: int, path_team: str) -> InlineKeyboardMarkup:
     """
     [['Хочу приобрести эти фото'], ['Посмотреть другой экипаж'], ['Спасибо, не в это раз']]
     :param id_frame:
+    :param path_team:
     :return:
     """
-    button_1 = InlineKeyboardButton(text='Хочу приобрести эти фото', callback_data=f'semiautopay_{id_frame}')
+    button_1 = InlineKeyboardButton(text='Хочу приобрести эти фото',
+                                    callback_data=f'semiautopay!@!{id_frame}!@!{path_team}')
     button_2 = InlineKeyboardButton(text='Посмотреть другой экипаж', callback_data='other_team')
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_1], [button_2]])
     return keyboard
@@ -45,7 +49,7 @@ def keyboard_preview_cancel(id_frame: int) -> InlineKeyboardMarkup:
 
 def keyboard_not_public_link() -> InlineKeyboardMarkup:
     """
-    [['Посмотреть другой экипаж'], ['Спасибо, не в это раз']]
+    [['Посмотреть другой экипаж']]
     :return:
     """
     button_1 = InlineKeyboardButton(text='Посмотреть другой экипаж', callback_data='other_team')
@@ -53,12 +57,14 @@ def keyboard_not_public_link() -> InlineKeyboardMarkup:
     return keyboard
 
 
-def keyboard_wish(id_frame: int) -> InlineKeyboardMarkup:
+def keyboard_wish(id_frame: int, num_team: str) -> InlineKeyboardMarkup:
     """
-    [['Хочу приобрести эти фото'], ['Посмотреть другой экипаж'], ['Спасибо, не в это раз']]
+    [['Хочу приобрести эти фото']]
     :param id_frame:
+    :param num_team:
     :return:
     """
-    button_1 = InlineKeyboardButton(text='Хочу приобрести эти фото', callback_data=f'semiautopay_{id_frame}')
+    button_1 = InlineKeyboardButton(text='Хочу приобрести эти фото',
+                                    callback_data=f'semiautopay!@!{id_frame}!@!{num_team}')
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_1]])
     return keyboard

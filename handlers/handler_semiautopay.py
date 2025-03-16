@@ -6,7 +6,7 @@ from aiogram.filters import StateFilter
 
 
 from keyboards.keyboard_semiautopay import keyboard_check_payment, keyboard_send_check, keyboard_show_orders
-from keyboards.start_keyboard import keyboard_not_public_link
+from keyboards.start_keyboard import keyboard_not_public_link, keyboard_wish
 from config_data.config import Config, load_config
 from database import requests as rq
 from database.models import Frame, Order
@@ -35,30 +35,81 @@ async def process_select_item_semi_auto_pay(callback: CallbackQuery, state: FSMC
     """
     logging.info(f'process_select_item_semi_auto_pay: {callback.message.chat.id}')
     data = await state.get_data()
-    path = data['path']
-    order: Order = await rq.get_order_path(path=path)
+    print(data)
+    if data.get('msg_select', False):
+
+        try:
+            await bot.delete_message(chat_id=callback.from_user.id,
+                                     message_id=data['msg_select'])
+        except:
+            pass
+    if data.get('msg_thanks', False):
+        try:
+            await bot.delete_message(chat_id=callback.from_user.id,
+                                     message_id=data['msg_thanks'])
+        except:
+            pass
+
+    num_team = int(callback.data.split('!@!')[-1])
+    frame_id = int(callback.data.split('!@!')[-2])
+
+    path_event = f"disk:/MAIN/Ралли Яккима '25/preview/{num_team}"
+    print(path_event, callback.from_user.id, num_team)
+    order: Order = await rq.get_order_path(path=path_event,
+                                           tg_id=callback.from_user.id,
+                                           team=num_team)
+    # await callback.message.edit_reply_markup(reply_markup=None)
     if order:
-        await callback.message.edit_text(text='Вы уже оплатили этот заказ',
-                                         reply_markup=keyboard_show_orders())
+        if data.get('msg_wish', False):
+            path = order.path_folder
+            link_original = await get_photo_view_link(file_path=path.replace('preview', 'original'))
+            if link_original:
+                try:
+                    await bot.edit_message_text(chat_id=callback.from_user.id,
+                                                message_id=data['msg_wish'],
+                                                text=f'<b>Ралли Яккима ‘25, экипаж {order.team}</b>\n'
+                                                     f'покупка от: {order.date_payment}\n'
+                                                     f'{link_original}',
+                                                reply_markup=None)
+                except:
+                    pass
+            else:
+                await callback.message.answer(text='Фотографии для вашего экипажа ещё не добавлены, как они будут'
+                                                   ' загружены мы вас оповестим.',)
+        await callback.message.answer(text='Вы уже оплатили этот заказ',
+                                      reply_markup=keyboard_show_orders())
+        await state.update_data(msg_wish=False)
+
         return
+    if data.get('msg_wish', False):
+        try:
+            await bot.edit_message_reply_markup(chat_id=callback.from_user.id,
+                                                message_id=data['msg_wish'],
+                                                reply_markup=keyboard_wish(id_frame=frame_id,
+                                                                           num_team=str(num_team)))
+        except:
+            pass
     await state.set_state(state=None)
-    item_semi_auto_pay = int(callback.data.split('_')[-1])
-    await state.update_data(frame_id=item_semi_auto_pay)
-    frame: Frame = await rq.get_frame_id(id_=item_semi_auto_pay)
+    await state.update_data(msg_wish=False)
+    await state.update_data(msg_thanks=False)
+    await state.update_data(msg=False)
+    # frame_id = int(callback.data.split('!@!')[-2])
+    await state.update_data(frame_id=frame_id)
+    frame: Frame = await rq.get_frame_id(id_=frame_id)
     cost = config.tg_bot.cost_default
+    event = 'Событие'
     if frame:
         cost = frame.cost
-    event = path.split('/')[-3]
-    team = path.split('/')[-1]
-    await callback.message.edit_text(text=f'Для оплаты\n'
-                                          f'<b>Ралли Яккима ‘25, экипаж {team}</b>\n'
-                                          f'необходимо осуществить перевод\n'
-                                          f' 3000 р. по номеру телефона:\n'
-                                          f'+79817438193  или карты:\n'
-                                          f'<code>2200 4002 0168 7437</code>\n'
-                                          f'на имя: Ольга Ч, банк ВТБ\n'
-                                          f'…и отправить нам чек.',
-                                     reply_markup=keyboard_send_check(id_frame=item_semi_auto_pay))
+        event = frame.event.split('/')[-1]
+    await callback.message.answer(text=f'Для оплаты\n'
+                                       f'<b>{event}, экипаж {num_team}</b>\n'
+                                       f'необходимо осуществить перевод\n'
+                                       f' {cost} р. по номеру телефона:\n'
+                                       f'+79817438193  или карты:\n'
+                                       f'<code>2200 4002 0168 7437</code>\n'
+                                       f'на имя: Ольга Ч, банк ВТБ\n'
+                                       f'…и отправить нам чек.',
+                                  reply_markup=keyboard_send_check(id_frame=frame_id))
     await callback.answer()
 
 
@@ -72,7 +123,7 @@ async def process_get_check(callback: CallbackQuery, state: FSMContext, bot: Bot
     :return:
     """
     logging.info(f'process_get_check: {callback.message.chat.id}')
-    await callback.message.edit_text(text='отправьте файл сообщением')
+    await callback.message.edit_text(text='отправьте скриншот чека сообщением')
     await state.update_data(id_frame=callback.data.split('_')[-1])
     await state.set_state(StateSemiAutoPay.chek_pay)
     await callback.answer()
@@ -148,7 +199,7 @@ async def process_confirm_cancel_payment(callback: CallbackQuery, state: FSMCont
             current_date_str = current_date.strftime('%d.%m.%Y %H:%M')
             await bot.send_message(chat_id=info_order.tg_id,
                                    text=f'<b>Ралли Яккима ‘25, экипаж {team}</b>\n'
-                                        f'покупка от: {current_date_str}'
+                                        f'покупка от: {current_date_str}\n'
                                         f'{link_original}')
             msg = await bot.send_message(chat_id=info_order.tg_id,
                                          text='Благодарим вас за покупку, можете посмотреть другие подборки',
@@ -160,7 +211,7 @@ async def process_confirm_cancel_payment(callback: CallbackQuery, state: FSMCont
                                         ' загружены мы вас оповестим.',
                                    reply_markup=keyboard_not_public_link())
             await send_text_admins(bot=bot,
-                                   text=f'Пользователь <a href="tg://user?id={callback.from_user.id}">'
+                                   text=f'Пользователь <a href="tg://user?id={info_order.tg_id}">'
                                         f'{callback.from_user.username}</a> оплатил подборку фотографий '
                                         f'<b>{event} экипаж {team}</b> но  ссылку не получил')
         await rq.update_order_id(id_=order_id)
