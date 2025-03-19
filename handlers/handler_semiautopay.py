@@ -52,13 +52,24 @@ async def process_select_item_semi_auto_pay(callback: CallbackQuery, state: FSMC
 
     num_team = int(callback.data.split('!@!')[-1])
     frame_id = int(callback.data.split('!@!')[-2])
-
+    cost = config.tg_bot.cost_default
+    event = 'Событие'
+    frame: Frame = await rq.get_frame_id(id_=frame_id)
+    if frame:
+        cost = frame.cost
+        event = frame.event.split('/')[-1]
     path_event = f"disk:/MAIN/Ралли Яккима '25/preview/{num_team}"
     print(path_event, callback.from_user.id, num_team)
     order: Order = await rq.get_order_path(path=path_event,
                                            tg_id=callback.from_user.id,
                                            team=num_team)
-    # await callback.message.edit_reply_markup(reply_markup=None)
+    link_preview = await get_photo_view_link(file_path=path_event)
+    await callback.message.edit_text(text=f'<b>Ралли Яккима ‘25, экипаж {num_team}</b>\n'
+                                          f'Стоимость вашего пакета {cost} ₽\n'
+                                          f'посмотреть подборку:\n'
+                                          f'{link_preview}\n\n'
+                                          f'Ожидаем от Вас оплаты...',
+                                     reply_markup=None)
     if order:
         if data.get('msg_wish', False):
             path = order.path_folder
@@ -95,12 +106,8 @@ async def process_select_item_semi_auto_pay(callback: CallbackQuery, state: FSMC
     await state.update_data(msg=False)
     # frame_id = int(callback.data.split('!@!')[-2])
     await state.update_data(frame_id=frame_id)
-    frame: Frame = await rq.get_frame_id(id_=frame_id)
-    cost = config.tg_bot.cost_default
-    event = 'Событие'
-    if frame:
-        cost = frame.cost
-        event = frame.event.split('/')[-1]
+
+
     await callback.message.answer(text=f'Для оплаты\n'
                                        f'<b>{event}, экипаж {num_team}</b>\n'
                                        f'необходимо осуществить перевод\n'

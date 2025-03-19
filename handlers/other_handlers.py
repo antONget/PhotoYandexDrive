@@ -33,5 +33,6 @@ async def all_message(message: Message) -> None:
     if message.text == '/get_DB':
         file_path = "database/db.sqlite3"
         await message.answer_document(FSInputFile(file_path))
-
+    else:
+        await message.answer(text='Я вас не понимаю, воспользуйтесь меню')
 
