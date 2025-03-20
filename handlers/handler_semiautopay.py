@@ -130,7 +130,8 @@ async def process_get_check(callback: CallbackQuery, state: FSMContext, bot: Bot
     :return:
     """
     logging.info(f'process_get_check: {callback.message.chat.id}')
-    await callback.message.edit_text(text='отправьте скриншот чека сообщением')
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await callback.message.answer(text='отправьте скриншот чека сообщением')
     await state.update_data(id_frame=callback.data.split('_')[-1])
     await state.set_state(StateSemiAutoPay.chek_pay)
     await callback.answer()
