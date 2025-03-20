@@ -68,3 +68,9 @@ def keyboard_wish(id_frame: int, num_team: str) -> InlineKeyboardMarkup:
                                     callback_data=f'semiautopay!@!{id_frame}!@!{num_team}')
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_1]])
     return keyboard
+
+def keyboard_show_orders() -> InlineKeyboardMarkup:
+    logging.info("keyboard_show_orders")
+    button_1 = InlineKeyboardButton(text='показать Мои заказы',  callback_data=f'show_orders')
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[button_1]])
+    return keyboard

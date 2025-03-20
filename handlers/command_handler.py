@@ -54,9 +54,9 @@ async def command_orders_callback(callback: CallbackQuery, bot: Bot) -> None:
             original_path = order.path_folder.replace('preview', 'original')
             print(original_path)
             view = await get_photo_view_link(file_path=original_path)
-            await callback.message.answer(text=f'<b>Дата покупки:</b> {order.date_payment}\n'
-                                               f'<b>Событие:</b> {order.event} - <b>экипаж:</b> {order.team}\n'
-                                               f'📄 Ссылка для просмотра: {view}')
+            await callback.message.answer(text=f'<b>{order.event}, экипаж {order.team}</b>\n'
+                                               f'покупка от: {order.date_payment}\n'
+                                               f'{view}')
     else:
         await callback.answer(text="Вы еще не совершали заказов",
                               show_alert=True)

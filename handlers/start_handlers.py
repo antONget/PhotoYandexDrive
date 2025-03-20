@@ -5,17 +5,20 @@ from aiogram.filters import CommandStart, StateFilter, CommandObject
 from aiogram.fsm.context import FSMContext
 
 from database import requests as rq
-from database.requests import add_user
-from utils.error_handling import error_handler
+from database.models import Order
+
 from services.yandex_drive import get_list_folders_to_path, get_list_file_to_path, get_photo_view_link
-from filter.admin_filter import check_super_admin
+from handlers.command_handler import command_orders, command_help, command_support
+from utils.error_handling import error_handler
 from utils.utils_keyboard import utils_handler_pagination_and_select_item
 from utils.send_admins import send_text_admins
+from filter.admin_filter import check_super_admin
 from filter.user_filter import check_role
-from keyboards.start_keyboard import keyboard_preview_folder, keyboard_start, keyboard_not_public_link, keyboard_wish
+from keyboards.start_keyboard import keyboard_preview_folder, keyboard_start, keyboard_not_public_link, keyboard_wish, \
+    keyboard_show_orders
 import logging
 from config_data.config import Config, load_config
-from handlers.command_handler import command_orders, command_help, command_support
+
 
 router = Router()
 router.message.filter(F.chat.type == "private")
@@ -36,7 +39,7 @@ async def registration(message: Message, state: FSMContext, command: CommandObje
         data = {"tg_id": tg_id, "username": username, "role": rq.UserRole.admin}
         await message.answer(text='Вы АДМИНИСТРАТОР проекта',
                              reply_markup=keyboard_start())
-    await add_user(data)
+    await rq.add_user(data)
     if token:
         role = await rq.get_token(token=token, tg_id=message.from_user.id)
         if role:
@@ -45,6 +48,34 @@ async def registration(message: Message, state: FSMContext, command: CommandObje
         else:
             await message.answer(text='Пригласительная ссылка не валидна')
 
+
+async def check_payment_team(path_event: str, num_team: int, tg_id: int, message: Message):
+    """
+    Проверка, что выбранный экипаж уже куплен пользователем
+    :return:
+    """
+    order: Order = await rq.get_order_path(path=path_event,
+                                           tg_id=tg_id,
+                                           team=num_team)
+    if order:
+        path = order.path_folder
+        link_original = await get_photo_view_link(file_path=path.replace('preview', 'original'))
+        if link_original:
+            try:
+                await message.answer(text=f'<b>Ралли Яккима ‘25, экипаж {order.team}</b>\n'
+                                          f'покупка от: {order.date_payment}\n'
+                                          f'{link_original}',
+                                     reply_markup=None)
+            except:
+                pass
+        else:
+            await message.answer(text='Фотографии для вашего экипажа ещё не добавлены, как они будут'
+                                      ' загружены мы вас оповестим.',)
+        await message.answer(text='Вы уже оплатили этот заказ',
+                             reply_markup=keyboard_show_orders())
+        return True
+    else:
+        return False
 
 @router.message(CommandStart())
 @error_handler
@@ -188,6 +219,11 @@ async def get_team(message: Message, state: FSMContext, bot: Bot):
         await bot.send_chat_action(chat_id=message.from_user.id, action='typing')
         path = path + '/' + str(int(num_team))
         path_team = path
+        if await check_payment_team(path_event=path_team,
+                                    num_team=int(num_team),
+                                    tg_id=message.from_user.id,
+                                    message=message):
+            return
         list_file = await get_list_file_to_path(path=path)
         await state.update_data(path=path)
         event = path.split('/')[-2]
@@ -268,6 +304,11 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
     path = data['path']
     num_team = callback.data.split('_')[-1]
     path = path + '/' + num_team
+    if await check_payment_team(path_event=path,
+                                num_team=int(num_team),
+                                tg_id=callback.from_user.id,
+                                message=callback.message):
+        return
     await state.update_data(path=path)
     list_file = await get_list_file_to_path(path=path)
     event = path.split('/')[-2]

@@ -70,34 +70,20 @@ async def process_select_item_semi_auto_pay(callback: CallbackQuery, state: FSMC
                                           f'{link_preview}\n\n'
                                           f'Ожидаем от Вас оплаты...',
                                      reply_markup=None)
-    if order:
-        if data.get('msg_wish', False):
-            path = order.path_folder
-            link_original = await get_photo_view_link(file_path=path.replace('preview', 'original'))
-            if link_original:
-                try:
-                    await bot.edit_message_text(chat_id=callback.from_user.id,
-                                                message_id=data['msg_wish'],
-                                                text=f'<b>Ралли Яккима ‘25, экипаж {order.team}</b>\n'
-                                                     f'покупка от: {order.date_payment}\n'
-                                                     f'{link_original}',
-                                                reply_markup=None)
-                except:
-                    pass
-            else:
-                await callback.message.answer(text='Фотографии для вашего экипажа ещё не добавлены, как они будут'
-                                                   ' загружены мы вас оповестим.',)
-        await callback.message.answer(text='Вы уже оплатили этот заказ',
-                                      reply_markup=keyboard_show_orders())
-        await state.update_data(msg_wish=False)
-
-        return
     if data.get('msg_wish', False):
         try:
-            await bot.edit_message_reply_markup(chat_id=callback.from_user.id,
-                                                message_id=data['msg_wish'],
-                                                reply_markup=keyboard_wish(id_frame=frame_id,
-                                                                           num_team=str(num_team)))
+            # await bot.edit_message_reply_markup(chat_id=callback.from_user.id,
+            #                                     message_id=data['msg_wish'],
+            #                                     reply_markup=keyboard_wish(id_frame=frame_id,
+            #                                                                num_team=str(num_team)))
+            await bot.edit_message_text(chat_id=callback.from_user.id,
+                                        message_id=data['msg_wish'],
+                                        text=f'<b>Ралли Яккима ‘25, экипаж {num_team}</b>\n'
+                                             f'Стоимость вашего пакета {cost} ₽\n'
+                                             f'посмотреть подборку:\n'
+                                             f'{link_preview}\n\n'
+                                             f'Ожидаем от Вас оплаты...',
+                                        reply_markup=None)
         except:
             pass
     await state.set_state(state=None)
