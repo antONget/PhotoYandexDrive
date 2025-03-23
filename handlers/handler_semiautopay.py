@@ -58,7 +58,7 @@ async def process_select_item_semi_auto_pay(callback: CallbackQuery, state: FSMC
     if frame:
         cost = frame.cost
         event = frame.event.split('/')[-1]
-    path_event = f"disk:/MAIN/Ралли Яккима '25/preview/{num_team}"
+    path_event = f"disk:/СЕЗОН 2025/КР4 ЯККИМА 25/preview/{num_team}"
     print(path_event, callback.from_user.id, num_team)
     order: Order = await rq.get_order_path(path=path_event,
                                            tg_id=callback.from_user.id,
@@ -95,7 +95,7 @@ async def process_select_item_semi_auto_pay(callback: CallbackQuery, state: FSMC
 
 
     await callback.message.answer(text=f'Для оплаты\n'
-                                       f'<b>{event}, экипаж {num_team}</b>\n'
+                                       f'<b>Ралли Яккима ‘25, экипаж {num_team}</b>\n'
                                        f'необходимо осуществить перевод\n'
                                        f' {cost} р. по номеру телефона:\n'
                                        f'+79817438193  или карты:\n'

@@ -77,6 +77,7 @@ async def check_payment_team(path_event: str, num_team: int, tg_id: int, message
     else:
         return False
 
+
 @router.message(CommandStart())
 @error_handler
 async def process_press_start(message: Message, state: FSMContext, command: CommandObject, bot: Bot) -> None:
@@ -89,9 +90,12 @@ async def process_press_start(message: Message, state: FSMContext, command: Comm
     :return:
     """
     logging.info('process_press_start ')
+    # list_folder = await get_list_folders_to_path('disk:/СЕЗОН 2025/КР4 ЯККИМА 25/original')
+    # print(list_folder)
+    # return
     await registration(message=message, state=state, command=command, bot=bot)
-    path_root = "disk:/MAIN"
-    event = "Ралли Яккима '25"
+    path_root = "disk:/СЕЗОН 2025"
+    event = "КР4 ЯККИМА 25"
     path = f"{path_root}/{event}"
     await state.update_data(path=path)
     list_folder = await get_list_folders_to_path(path)
@@ -107,6 +111,7 @@ async def process_press_start(message: Message, state: FSMContext, command: Comm
             list_folder_int = list(map(int, list_folder))
             list_sorted = sorted(list_folder_int)
             list_file = list(map(str, list_sorted))
+            print(list_file)
             await state.update_data(path=path)
             msg = await utils_handler_pagination_and_select_item(list_items=list_file,
                                                                  text_message_pagination="<b>Ралли Яккима '25</b>\n"
@@ -205,7 +210,8 @@ async def get_team(message: Message, state: FSMContext, bot: Bot):
                                  message_id=message.message_id - 1)
 
     num_team = message.text
-    path = "disk:/MAIN/Ралли Яккима '25"
+    # path = "disk:/MAIN/Ралли Яккима '25"
+    path = "disk:/СЕЗОН 2025/КР4 ЯККИМА 25"
     if await check_role(tg_id=message.from_user.id,
                         role=rq.UserRole.partner) or await check_role(tg_id=message.from_user.id,
                                                                       role=rq.UserRole.admin):
@@ -226,11 +232,11 @@ async def get_team(message: Message, state: FSMContext, bot: Bot):
             return
         list_file = await get_list_file_to_path(path=path)
         await state.update_data(path=path)
-        event = path.split('/')[-2]
+        event = path.split('/')[-3]
         # если файлы в папке есть
         if list_file:
             # данные о тарифе для папки
-            frame = await rq.get_frame_event(event="disk:/MAIN/Ралли Яккима '25")
+            frame = await rq.get_frame_event(event="disk:/СЕЗОН 2025/КР4 ЯККИМА 25")
             cost = int(config.tg_bot.cost_default)
             id_frame = 0
             if frame:
@@ -262,11 +268,12 @@ async def get_team(message: Message, state: FSMContext, bot: Bot):
                     await state.update_data(num_team_wish=num_team)
             # если возникла проблема при формировании ссылки
             else:
-                msg = await message.answer(text='Возникла проблема с генерацией ссылки на подборку фотографий',
+                msg = await message.answer(text='Возникла проблема с генерацией ссылки на подборку фотографий,'
+                                                ' повторите попытку',
                                            reply_markup=keyboard_not_public_link())
                 await send_text_admins(bot=bot,
                                        text=f'При генерации ссылки на подборку фотографий <b>{event}'
-                                            f' экипаж {num_team}</b>'
+                                            f' экипаж {num_team}</b> '
                                             f'у пользователя <a href="tg://user?id={message.from_user.id}">'
                                             f'{message.from_user.username}</a> возникла проблема')
                 await state.update_data(msg=msg.message_id)
@@ -311,10 +318,10 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
         return
     await state.update_data(path=path)
     list_file = await get_list_file_to_path(path=path)
-    event = path.split('/')[-2]
+    event = path.split('/')[-3]
     path_team = path
     print(path)
-    frame = await rq.get_frame_event(event="disk:/MAIN/Ралли Яккима '25")
+    frame = await rq.get_frame_event(event="disk:/СЕЗОН 2025/КР4 ЯККИМА 25")
     cost = config.tg_bot.cost_default
     id_frame = 0
     if frame:
@@ -344,11 +351,12 @@ async def process_select_action(callback: CallbackQuery, state: FSMContext, bot:
                 await state.update_data(msg_wish=msg.message_id)
                 await state.update_data(num_team_wish=num_team)
         else:
-            msg = await callback.message.answer(text='Возникла проблема с генерацией ссылки на подборку фотографий',
+            msg = await callback.message.answer(text='Возникла проблема с генерацией ссылки на подборку фотографий,'
+                                                     ' повторите попытку',
                                                 reply_markup=keyboard_not_public_link())
             await send_text_admins(bot=bot,
                                    text=f'При генерации ссылки на подборку фотографий <b>{event} экипаж {num_team}</b>'
-                                        f'у пользователя <a href="tg://user?id={callback.from_user.id}">'
+                                        f' у пользователя <a href="tg://user?id={callback.from_user.id}">'
                                         f'{callback.from_user.username}</a> возникла проблема')
             await state.update_data(msg=msg.message_id)
     else:
@@ -397,7 +405,7 @@ async def process_select_other_team(callback: CallbackQuery, state: FSMContext, 
     #     path_event = '/'.join(path_list[:])
     #     await state.update_data(not_team=False)
     # print(path_event, data.get('not_team', False))
-    path_event = "disk:/MAIN/Ралли Яккима '25"
+    path_event = "disk:/СЕЗОН 2025/КР4 ЯККИМА 25"
     if await check_role(tg_id=callback.from_user.id,
                         role=rq.UserRole.partner) or await check_role(tg_id=callback.from_user.id,
                                                                       role=rq.UserRole.admin):
