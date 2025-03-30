@@ -61,9 +61,8 @@ async def process_personal_add(callback: CallbackQuery, state: FSMContext, bot: 
                   "role": edit_role}
     await rq.add_token(data=token_data)
     await callback.message.edit_text(text=f'Для добавления пользователя в список {role}, '
-                                          f'отправьте ему пригласительную ссылку:\n'
-                                          f'<code>https://t.me/{config.tg_bot.link_bot}?start={rand_token}'
-                                          f'</code>')
+                                          f'отправьте ему пригласительную ссылку 👇')
+    await callback.message.answer(text=f'<code>https://t.me/{config.tg_bot.link_bot}?start={rand_token}</code>')
     await callback.answer()
 
 
