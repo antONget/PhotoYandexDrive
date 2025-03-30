@@ -90,8 +90,12 @@ async def process_del_admin(callback: CallbackQuery, state: FSMContext, bot: Bot
                                          back=0,
                                          forward=2,
                                          count=6)
-    await callback.message.edit_text(text=f'Выберите пользователя, которого нужно удалить из {role}',
-                                     reply_markup=keyboard)
+    try:
+        await callback.message.edit_text(text=f'Выберите пользователя, которого нужно удалить из {role}',
+                                         reply_markup=keyboard)
+    except:
+        await callback.message.edit_text(text=f'Выберите пользователя, которого нужно удалить из {role}.',
+                                         reply_markup=keyboard)
     await callback.answer()
 
 

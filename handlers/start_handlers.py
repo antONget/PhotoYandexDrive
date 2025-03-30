@@ -45,6 +45,7 @@ async def registration(message: Message, state: FSMContext, command: CommandObje
         if role:
             await rq.update_user_role(tg_id=message.from_user.id,
                                       role=role)
+            await message.answer(text=f'Ваша роль в проекте обновлена на {role}')
         else:
             await message.answer(text='Пригласительная ссылка не валидна')
 
@@ -91,7 +92,11 @@ async def process_press_start(message: Message, state: FSMContext, command: Comm
     """
     logging.info('process_press_start ')
     # list_folder = await get_list_folders_to_path('disk:/СЕЗОН 2025/КР4 ЯККИМА 25/original')
-    # print(list_folder)
+    # for team in list_folder:
+    #     file_team = await get_list_file_to_path('disk:/СЕЗОН 2025/КР4 ЯККИМА 25/original'+'/'+team)
+    #     print(file_team)
+    #     link = await get_photo_view_link('disk:/СЕЗОН 2025/КР4 ЯККИМА 25/original'+'/'+team)
+    #     print(link)
     # return
     await registration(message=message, state=state, command=command, bot=bot)
     path_root = "disk:/СЕЗОН 2025"
@@ -173,6 +178,14 @@ async def get_team(message: Message, state: FSMContext, bot: Bot):
     :return:
     """
     logging.info(f'get_team {message.message_id}')
+    # list_folder = await get_list_folders_to_path('disk:/СЕЗОН 2025/КР4 ЯККИМА 25/original')
+    # print(list_folder)
+    # for team in list_folder:
+    #     file_team = await get_list_file_to_path('disk:/СЕЗОН 2025/КР4 ЯККИМА 25/original'+'/'+team)
+    #     print(file_team)
+    #     link = await get_photo_view_link('disk:/СЕЗОН 2025/КР4 ЯККИМА 25/original'+'/'+team)
+    #     print(link)
+    # return
     # если пользователь ввел команду
     if message.text == '/order':
         await command_orders(message=message, bot=bot)
